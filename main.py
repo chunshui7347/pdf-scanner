@@ -1,13 +1,10 @@
 import os
 import openai
 import streamlit as st
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
+import json
 
 # Retrieve API key from environment variable
-openai.api_key = os.getenv("OPENAI_API_KEY")
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 # OpenAI API key initialization
 def ask_question(question: str, context: str):
@@ -20,7 +17,7 @@ def ask_question(question: str, context: str):
                 {"role": "user", "content": question}
             ]
         )
-        answer = response.choices[0].message
+        answer = response.choices[0].message.content
         return answer
     except Exception as e:
         return f"An error occurred while asking the question: {e}"
@@ -51,6 +48,13 @@ if uploaded_file is not None:
 if prompt := st.text_input("What would you like to know?"):
     if file_content:
         response = ask_question(prompt, file_content)
-        st.write(response)
+        # st.write(f"Answer: {response}")
+        cleaned_response = response.split("```json")[1].strip().strip("```")
+
+       # Parse the response string to JSON
+        response_json = json.loads(cleaned_response)
+
+        # Display the JSON in a nicely formatted way
+        st.json(response_json)
     else:
         st.write("Please upload a file to provide context for your question.")
